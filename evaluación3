@@ -1,0 +1,203 @@
+import json
+from datetime import datetime
+
+# Diccionario de tipos de pizzas disponibles en el DUOC UC
+pizzas_disponibles = {
+    "cuatro quesos": {
+        "pequeña": {"precio": 6000},
+        "mediana": {"precio": 9000},
+        "familiar": {"precio": 12000}
+    },
+    "hawaiana": {
+        "pequeña": {"precio": 6000},
+        "mediana": {"precio": 9000},
+        "familiar": {"precio": 12000}
+    },
+    "napolitana": {
+        "pequeña": {"precio": 5500},
+        "mediana": {"precio": 8500},
+        "familiar": {"precio": 11000}
+    },
+    "pepperoni": {
+        "pequeña": {"precio": 7000},
+        "mediana": {"precio": 10000},
+        "familiar": {"precio": 13000}
+    }
+}
+
+ventas = []
+
+descuentos = {
+    "Estudiante diurno": 0.12,
+    "Estudiante vespertino": 0.14,
+    "Administrativo": 0.10
+}
+
+# Función para registrar una venta
+def registrar_venta():
+    nombre_cliente = input("Ingrese el nombre del cliente: ")
+    tipo_cliente = input("Ingrese el tipo de cliente (Estudiante diurno, Estudiante vespertino, Administrativo): ")
+    tipo_pizza = input("Ingrese el tipo de pizza (cuatro quesos, hawaiana, napolitana, pepperoni): ")
+    
+    if tipo_pizza in pizzas_disponibles:
+        print(f"Pizzas disponibles para {tipo_pizza}:")
+        for tamaño, detalles in pizzas_disponibles[tipo_pizza].items():
+            print(f"Tamaño: {tamaño}, Precio: ${detalles['precio']}")
+        
+        tamaño_pizza = input("Seleccione el tamaño de la pizza: ").strip().lower()
+        
+        if tamaño_pizza in pizzas_disponibles[tipo_pizza]:
+            precio = pizzas_disponibles[tipo_pizza][tamaño_pizza]["precio"]
+            
+            if tipo_cliente in descuentos:
+                descuento = descuentos[tipo_cliente]
+                precio_final = precio - (precio * descuento)
+            else:
+                precio_final = precio
+            
+            venta = {
+                "nombre_cliente": nombre_cliente,
+                "tipo_cliente": tipo_cliente,
+                "tipo_pizza": tipo_pizza,
+                "tamaño_pizza": tamaño_pizza,
+                "precio": precio,
+                "precio_final": precio_final,
+                "fecha_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            ventas.append(venta)
+            print("Venta registrada con éxito.")
+        else:
+            print("Tamaño de pizza no válido.")
+    else:
+        print("Tipo de pizza no válido.")
+
+# Función para mostrar todas las ventas
+def mostrar_ventas():
+    for i, venta in enumerate(ventas, start=1):
+        print(f"Venta {i}:")
+        print(f"Nombre cliente: {venta['nombre_cliente']}")
+        print(f"Tipo cliente: {venta['tipo_cliente']}")
+        print(f"Tipo pizza: {venta['tipo_pizza']}")
+        print(f"Tamaño pizza: {venta['tamaño_pizza']}")
+        print(f"Precio: ${venta['precio']}")
+        print(f"Precio final: ${venta['precio_final']}")
+        print(f"Fecha y hora: {venta['fecha_hora']}")
+        print("--------------------------------------")
+
+# Función para buscar ventas por cliente
+def buscar_ventas_por_cliente():
+    nombre_cliente = input("Ingrese el nombre del cliente: ")
+    ventas_encontradas = [venta for venta in ventas if venta['nombre_cliente'].lower() == nombre_cliente.lower()]
+    
+    if ventas_encontradas:
+        print(f"Ventas encontradas para el cliente '{nombre_cliente}':")
+        for venta in ventas_encontradas:
+            print("--------------------------------------")
+            print(f"Tipo pizza: {venta['tipo_pizza']}")
+            print(f"Tamaño pizza: {venta['tamaño_pizza']}")
+            print(f"Precio final: ${venta['precio_final']}")
+            print(f"Fecha y hora: {venta['fecha_hora']}")
+        print("--------------------------------------")
+    else:
+        print(f"No se encontraron ventas para el cliente '{nombre_cliente}'.")
+
+# Función para guardar las ventas en un archivo JSON
+def guardar_ventas():
+    with open('ventas.json', 'w') as file:
+        json.dump(ventas, file, indent=4)
+    print("Ventas guardadas en el archivo 'ventas.json'.")
+
+# Función para cargar las ventas desde un archivo JSON
+def cargar_ventas():
+    global ventas
+    try:
+        with open('ventas.json', 'r') as file:
+            ventas = json.load(file)
+        print("Ventas cargadas desde el archivo 'ventas.json'.")
+    except FileNotFoundError:
+        print("No se encontró el archivo 'ventas.json'. No se cargaron ventas.")
+
+# Función para generar factura
+def generar_factura():
+    nombre_cliente = input("Ingrese el nombre del cliente: ")
+    ventas_cliente = [venta for venta in ventas if venta["nombre_cliente"].lower() == nombre_cliente.lower()]
+    
+    if ventas_cliente:
+        now = datetime.now()
+        fecha_hora = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        print(f"\nBoleta para {nombre_cliente} - Fecha y hora: {fecha_hora}:")
+        print("--------------------------------------------------------")
+        total = 0
+        for venta in ventas_cliente:
+            print(f"Pizza: {venta['tipo_pizza']}")
+            print(f"  Tamaño: {venta['tamaño_pizza']}")
+            print(f"  Precio unitario: ${venta['precio']}")
+            print(f"  Precio final con descuento: ${venta['precio_final']}")
+            print("--------------------------------------------------------")
+            total += venta["precio_final"]
+        print(f"Total a pagar: ${total}")
+        print("--------------------------------------------------------")
+    else:
+        print(f"No se encontraron ventas para el cliente '{nombre_cliente}'.")
+
+# Función para anular una venta
+def anular_venta():
+    nombre_cliente = input("Ingrese el nombre del cliente para anular la venta: ").strip().lower()
+    ventas_cliente = [venta for venta in ventas if venta["nombre_cliente"].lower() == nombre_cliente]
+    
+    if ventas_cliente:
+        print(f"Ventas encontradas para el cliente '{nombre_cliente}':")
+        for i, venta in enumerate(ventas_cliente, start=1):
+            print(f"{i}. Pizza: {venta['tipo_pizza']}, Tamaño: {venta['tamaño_pizza']}, Precio final: ${venta['precio_final']}")
+        
+        num_venta = int(input("Seleccione el número de venta que desea anular: ")) - 1
+        
+        if 0 <= num_venta < len(ventas_cliente):
+            venta_anulada = ventas_cliente[num_venta]
+            ventas.remove(venta_anulada)
+            print(f"Venta anulada correctamente para el cliente '{nombre_cliente}'.")
+        else:
+            print("Número de venta no válido.")
+    else:
+        print(f"No se encontraron ventas para el cliente '{nombre_cliente}'.")
+
+# Función para el menú interactivo
+def menu():
+    while True:
+        print("\nBienvenido al sistema de ventas de pizzas en DUOC UC")
+        print("1. Registrar una venta")
+        print("2. Mostrar todas las ventas")
+        print("3. Buscar ventas por cliente")
+        print("4. Guardar las ventas en un archivo")
+        print("5. Cargar las ventas desde un archivo")
+        print("6. Generar boleta")
+        print("7. Anular venta")
+        print("8. Salir del programa")
+        
+        opcion = input("Seleccione una opción: ").strip()
+        
+        if opcion == "1":
+            registrar_venta()
+        elif opcion == "2":
+            mostrar_ventas()
+        elif opcion == "3":
+            buscar_ventas_por_cliente()
+        elif opcion == "4":
+            guardar_ventas()
+        elif opcion == "5":
+            cargar_ventas()
+        elif opcion == "6":
+            generar_factura()
+        elif opcion == "7":
+            anular_venta()
+        elif opcion == "8":
+            print("Gracias por utilizar el sistema de ventas.")
+            break
+        else:
+            print("Opción no válida. Por favor, intente de nuevo.")
+
+# Ejecutar el menú interactivo
+if __name__ == "__main__":
+    menu()
